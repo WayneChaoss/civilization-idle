@@ -311,21 +311,40 @@ class CivilizationGame {
     }
 
     recruit() {
-        console.log('招募按钮被点击');
+        console.log('=== 招募函数被调用 ===');
         
         // 确保游戏已初始化
-        if (!this.state || !this.state.resources || !this.state.resources.food) {
-            console.error('游戏状态未初始化');
-            alert('游戏加载中，请稍后再试');
+        if (!this.state) {
+            console.error('错误：this.state 不存在');
+            alert('游戏未初始化，请刷新页面');
             return;
         }
         
-        const cost = 10 + Math.floor(this.state.population.total * 0.5);
-        const currentFood = this.state.resources.food.amount;
-        const currentPop = this.state.population.total;
-        const popCap = this.state.population.cap;
+        if (!this.state.resources || !this.state.resources.food) {
+            console.error('错误：食物资源不存在');
+            alert('资源数据错误，请刷新页面');
+            return;
+        }
         
-        console.log('招募成本:', cost, '当前食物:', currentFood, '人口:', currentPop, '/', popCap);
+        // 强制转换为数字
+        const cost = 10 + Math.floor(parseInt(this.state.population.total) * 0.5);
+        const currentFood = parseFloat(this.state.resources.food.amount);
+        const currentPop = parseInt(this.state.population.total);
+        const popCap = parseInt(this.state.population.cap);
+        
+        console.log('成本:', cost, typeof cost);
+        console.log('当前食物:', currentFood, typeof currentFood);
+        console.log('当前人口:', currentPop, typeof currentPop);
+        console.log('人口上限:', popCap, typeof popCap);
+        
+        console.log('检查1: 食物足够?', currentFood, '>=', cost, '=', currentFood >= cost);
+        console.log('检查2: 人口未满?', currentPop, '<', popCap, '=', currentPop < popCap);
+        
+        if (isNaN(currentFood) || isNaN(cost)) {
+            console.error('错误：食物或成本不是数字');
+            alert('数据错误，请刷新页面重试');
+            return;
+        }
         
         if (currentFood < cost) {
             alert(`食物不足！需要 ${cost} 食物，当前只有 ${Math.floor(currentFood)}`);
@@ -338,13 +357,21 @@ class CivilizationGame {
         }
         
         // 执行招募
-        this.state.resources.food.amount -= cost;
-        this.state.population.total += 1;
-        this.state.population.idle += 1;
+        console.log('执行招募...');
+        this.state.resources.food.amount = currentFood - cost;
+        this.state.population.total = currentPop + 1;
+        this.state.population.idle = parseInt(this.state.population.idle) + 1;
         
-        EventManager.logEvent(this, '招募了1名新村民');
+        console.log('招募成功！新状态:', {
+            food: this.state.resources.food.amount,
+            pop: this.state.population.total,
+            idle: this.state.population.idle
+        });
+        
+        if (typeof EventManager !== 'undefined') {
+            EventManager.logEvent(this, '招募了1名新村民');
+        }
         this.render();
-        console.log('招募成功！');
     }
 
     build(buildingKey) {
