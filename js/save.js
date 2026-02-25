@@ -49,12 +49,16 @@ const SaveManager = {
 
     // 合并存档状态（处理新增字段）
     mergeState(defaultState, savedState) {
+        // 创建默认状态的深拷贝
         const merged = JSON.parse(JSON.stringify(defaultState));
         
+        // 遍历保存的状态，覆盖默认值
         for (let key in savedState) {
-            if (typeof savedState[key] === 'object' && !Array.isArray(savedState[key]) && savedState[key] !== null) {
+            if (savedState[key] !== null && typeof savedState[key] === 'object' && !Array.isArray(savedState[key])) {
+                // 递归合并对象
                 merged[key] = this.mergeState(merged[key] || {}, savedState[key]);
             } else {
+                // 直接覆盖值（包括数组）
                 merged[key] = savedState[key];
             }
         }
