@@ -312,21 +312,39 @@ class CivilizationGame {
 
     recruit() {
         console.log('招募按钮被点击');
-        const cost = 10 + Math.floor(this.state.population.total * 0.5);
-        console.log('招募成本:', cost, '食物');
-        console.log('当前食物:', this.state.resources.food.amount);
-        console.log('人口:', this.state.population.total, '/', this.state.population.cap);
         
-        if (this.canAfford({ food: cost }) && this.state.population.total < this.state.population.cap) {
-            this.payCosts({ food: cost });
-            this.addPopulation(1);
-            EventManager.logEvent(this, '招募了1名新村民');
-            this.render();
-            console.log('招募成功');
-        } else {
-            console.log('招募失败：食物不足或人口已达上限');
-            alert('食物不足或人口已达上限！');
+        // 确保游戏已初始化
+        if (!this.state || !this.state.resources || !this.state.resources.food) {
+            console.error('游戏状态未初始化');
+            alert('游戏加载中，请稍后再试');
+            return;
         }
+        
+        const cost = 10 + Math.floor(this.state.population.total * 0.5);
+        const currentFood = this.state.resources.food.amount;
+        const currentPop = this.state.population.total;
+        const popCap = this.state.population.cap;
+        
+        console.log('招募成本:', cost, '当前食物:', currentFood, '人口:', currentPop, '/', popCap);
+        
+        if (currentFood < cost) {
+            alert(`食物不足！需要 ${cost} 食物，当前只有 ${Math.floor(currentFood)}`);
+            return;
+        }
+        
+        if (currentPop >= popCap) {
+            alert(`人口已达上限！当前 ${currentPop}/${popCap}，请建造更多住所`);
+            return;
+        }
+        
+        // 执行招募
+        this.state.resources.food.amount -= cost;
+        this.state.population.total += 1;
+        this.state.population.idle += 1;
+        
+        EventManager.logEvent(this, '招募了1名新村民');
+        this.render();
+        console.log('招募成功！');
     }
 
     build(buildingKey) {
