@@ -49,17 +49,30 @@ const SaveManager = {
 
     // 合并存档状态（处理新增字段）
     mergeState(defaultState, savedState) {
-        // 创建默认状态的深拷贝
-        const merged = JSON.parse(JSON.stringify(defaultState));
+        // 如果 savedState 是 null 或不是对象，直接返回 savedState
+        if (savedState === null || typeof savedState !== 'object') {
+            return savedState;
+        }
         
-        // 遍历保存的状态，覆盖默认值
+        // 如果是数组，直接返回副本
+        if (Array.isArray(savedState)) {
+            return [...savedState];
+        }
+        
+        // 创建新的合并对象，以 savedState 为基础（保留存档数据）
+        const merged = {};
+        
+        // 先复制 savedState 的所有属性（保留存档数据）
         for (let key in savedState) {
-            if (savedState[key] !== null && typeof savedState[key] === 'object' && !Array.isArray(savedState[key])) {
-                // 递归合并对象
-                merged[key] = this.mergeState(merged[key] || {}, savedState[key]);
-            } else {
-                // 直接覆盖值（包括数组）
-                merged[key] = savedState[key];
+            if (savedState.hasOwnProperty(key)) {
+                merged[key] = this.mergeState(null, savedState[key]);
+            }
+        }
+        
+        // 然后补充 defaultState 中有但 savedState 中没有的字段（处理新增字段）
+        for (let key in defaultState) {
+            if (defaultState.hasOwnProperty(key) && !(key in merged)) {
+                merged[key] = this.mergeState(null, defaultState[key]);
             }
         }
         
