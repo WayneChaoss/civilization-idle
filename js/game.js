@@ -140,6 +140,15 @@ class CivilizationGame {
         setInterval(() => this.updateUI(), 100);
         // 每分钟保存
         setInterval(() => this.save(), 60000);
+        
+        // 调试：每秒输出当前状态
+        setInterval(() => {
+            console.log('当前生产速率:', {
+                food: this.state.resources.food.rate,
+                wood: this.state.resources.wood.rate,
+                采集者: this.state.population.jobs.gatherer
+            });
+        }, 5000);
     }
 
     tick() {
@@ -480,9 +489,11 @@ class CivilizationGame {
         // 渲染生产效率
         const ratesDiv = document.getElementById('production-rates');
         ratesDiv.innerHTML = '';
+        let hasRates = false;
         for (let key in this.resourceDefs) {
             const rate = this.state.resources[key].rate;
             if (rate !== 0) {
+                hasRates = true;
                 const sign = rate > 0 ? '+' : '';
                 ratesDiv.innerHTML += `
                     <span class="rate ${rate > 0 ? 'positive' : 'negative'}">
@@ -490,6 +501,9 @@ class CivilizationGame {
                     </span>
                 `;
             }
+        }
+        if (!hasRates) {
+            ratesDiv.innerHTML = '<span style="color: var(--text-muted);">暂无生产（请分配工作或建造建筑）</span>';
         }
     }
 
