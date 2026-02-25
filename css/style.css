@@ -569,14 +569,21 @@ footer {
 }
 
 .tutorial-box {
-    position: absolute;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: var(--panel-bg);
     border: 2px solid var(--accent);
     border-radius: 12px;
-    padding: 25px;
-    max-width: 400px;
+    padding: 20px;
+    max-width: 90%;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     animation: tutorialSlideIn 0.3s ease;
+    z-index: 10002;
 }
 
 @keyframes tutorialSlideIn {
