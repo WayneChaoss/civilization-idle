@@ -134,16 +134,22 @@ const TutorialSystem = {
 
     // 获取提示框位置
     getPosition(target) {
-        if (!target) return 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
+        // 移动端始终底部居中
+        if (window.innerWidth <= 600) {
+            return 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);';
+        }
+        
+        // 桌面端如果有目标元素，显示在目标下方
+        if (!target) return 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);';
         
         const el = document.querySelector(target);
-        if (!el) return 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
+        if (!el) return 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);';
         
         const rect = el.getBoundingClientRect();
         const boxTop = rect.bottom + 20;
         const boxLeft = rect.left + rect.width / 2;
         
-        return `top: ${boxTop}px; left: ${boxLeft}px; transform: translateX(-50%);`;
+        return `position: absolute; top: ${boxTop}px; left: ${boxLeft}px; transform: translateX(-50%);`;
     },
 
     // 高亮目标元素
