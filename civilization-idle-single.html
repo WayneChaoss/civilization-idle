@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文明放置 - Civilization Idle</title>
+    <style>
+:root {
+    --bg-color: #1a1a2e;
+    --panel-bg: #16213e;
+    --card-bg: #0f3460;
+    --accent: #e94560;
+    --text: #eaeaea;
+    --text-muted: #a0a0a0;
+    --success: #4ecca3;
+    --warning: #ffa500;
+    --danger: #ff4757;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: var(--bg-color);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+}
+#game-container { max-width: 900px; margin: 0 auto; }
+header {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    position: relative;
+}
+header h1 { font-size: 28px; margin-bottom: 10px; }
+#game-time { font-size: 18px; color: var(--text-muted); }
+#offline-popup {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--warning);
+    color: #000;
+    padding: 15px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 400px;
+}
+#offline-popup.hidden { display: none; }
+#offline-popup button {
+    background: #000;
+    color: #fff;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+}
+#tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.tab-btn {
+    background: var(--panel-bg);
+    color: var(--text);
+    border: 2px solid transparent;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+.tab-btn:hover { background: var(--card-bg); }
+.tab-btn.active { border-color: var(--accent); background: var(--card-bg); }
+.panel {
+    display: none;
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+.panel.active { display: block; }
+.panel h2 { margin-bottom: 15px; font-size: 22px; }
+.panel h3 { margin: 20px 0 10px; font-size: 18px; color: var(--text-muted); }
+#resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.resource-card {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+.resource-card:hover { transform: translateY(-3px); }
+.resource-icon { font-size: 32px; margin-bottom: 5px; }
+.resource-name { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+.resource-amount { font-size: 20px; font-weight: bold; }
+.resource-max { font-size: 12px; color: var(--text-muted); }
+#production-rates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.rate {
+    background: var(--card-bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.rate.positive { color: var(--success); }
+.rate.negative { color: var(--danger); }
+.population-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.stat {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+#jobs-list { margin-bottom: 20px; }
+.job-item {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.job-info { display: flex; align-items: center; gap: 10px; }
+.job-icon { font-size: 24px; }
+.job-name { font-weight: bold; }
+.job-desc { color: var(--text-muted); font-size: 14px; }
+.job-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.job-controls button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: opacity 0.2s;
+}
+.job-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+.job-controls span { min-width: 30px; text-align: center; font-weight: bold; }
+.action-btn {
+    background: var(--success);
+    color: #000;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+#buildings-list, #tech-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.building-item, .tech-item {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.building-item.disabled, .tech-item.disabled { opacity: 0.6; }
+.building-info, .tech-info { display: flex; align-items: center; gap: 15px; }
+.building-icon, .tech-icon { font-size: 32px; }
+.building-name, .tech-name { font-weight: bold; margin-bottom: 5px; }
+.building-desc, .tech-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 5px; }
+.building-cost, .tech-cost { font-size: 13px; }
+.can-afford { color: var(--success); }
+.cannot-afford { color: var(--danger); }
+.building-item button, .tech-item button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.building-item button:disabled, .tech-item button:disabled { opacity: 0.5; cursor: not-allowed; }
+.tech-item.researched { background: var(--success); color: #000; }
+.explore-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: opacity 0.2s;
+}
+.explore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tile {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.tile-icon { font-size: 24px; }
+#event-log {
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+}
+.log-entry {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 14px;
+}
+.log-entry:last-child { border-bottom: none; }
+footer {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.footer-btn {
+    background: var(--card-bg);
+    color: var(--text);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+.footer-btn:hover { background: var(--accent); }
+.footer-btn.danger:hover { background: var(--danger); }
+@media (max-width: 600px) {
+    body { padding: 10px; }
+    #tabs { gap: 5px; }
+    .tab-btn { padding: 10px 15px; font-size: 14px; }
+    #resources-grid { grid-template-columns: repeat(3, 1fr); }
+    .building-info, .tech-info { flex-direction: column; align-items: flex-start; gap: 5px; }
+}
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>🏛️ 文明放置</h1>
+            <div id="game-time">第 <span id="year">1</span> 年</div>
+            <div id="offline-popup" class="hidden">
+                <span id="offline-message"></span>
+                <button onclick="dismissOffline()">✓</button>
+            </div>
+        </header>
+
+        <nav id="tabs">
+            <button class="tab-btn active" data-tab="resources">📦 资源</button>
+            <button class="tab-btn" data-tab="population">👥 人口</button>
+            <button class="tab-btn" data-tab="buildings">🏗️ 建筑</button>
+            <button class="tab-btn" data-tab="tech">🔬 科技</button>
+            <button class="tab-btn" data-tab="world">🌍 世界</button>
+        </nav>
+
+        <section id="resources-panel" class="panel active">
+            <h2>资源储量</h2>
+            <div id="resources-grid"></div>
+            <h3>生产效率</h3>
+            <div id="production-rates"></div>
+        </section>
+
+        <section id="population-panel" class="panel">
+            <h2>人口管理</h2>
+            <div class="population-info">
+                <div class="stat"><span>总人口:</span><span id="total-pop">0</span></div>
+                <div class="stat"><span>空闲人口:</span><span id="idle-pop">0</span></div>
+                <div class="stat"><span>人口上限:</span><span id="pop-cap">0</span></div>
+                <div class="stat"><span>幸福度:</span><span id="happiness">100%</span></div>
+            </div>
+            <h3>工作分配</h3>
+            <div id="jobs-list"></div>
+            <button id="recruit-btn" class="action-btn">招募村民 (-<span id="recruit-cost">10</span> 食物)</button>
+        </section>
+
+        <section id="buildings-panel" class="panel">
+            <h2>建筑</h2>
+            <div id="buildings-list"></div>
+        </section>
+
+        <section id="tech-panel" class="panel">
+            <h2>科技树</h2>
+            <div id="tech-tree"></div>
+        </section>
+
+        <section id="world-panel" class="panel">
+            <h2>世界探索</h2>
+            <div id="world-map"></div>
+            <h3>事件日志</h3>
+            <div id="event-log"></div>
+        </section>
+
+        <footer>
+            <button onclick="game.save()" class="footer-btn">💾 保存</button>
+            <button onclick="game.exportSave()" class="footer-btn">📤 导出存档</button>
+            <button onclick="game.importSave()" class="footer-btn">📥 导入存档</button>
+            <button onclick="game.hardReset()" class="footer-btn danger">⚠️ 重置</button>
+        </footer>
+    </div>
+
+    <script>
+// 资源定义
+const ResourceDefinitions = {
+    food: { name: '食物', icon: '🌾', initial: 100, max: 500 },
+    wood: { name: '木材', icon: '🪵', initial: 50, max: 500 },
+    stone: { name: '石料', icon: '🪨', initial: 0, max: 300 },
+    metal: { name: '金属', icon: '⚙️', initial: 0, max: 200 },
+    gold: { name: '黄金', icon: '🪙', initial: 0, max: 1000 },
+    research: { name: '科研点', icon: '🔬', initial: 0, max: Infinity },
+    culture: { name: '文化', icon: '🎭', initial: 0, max: Infinity },
+    faith: { name: '信仰', icon: '⛪', initial: 0, max: Infinity }
+};
+
+const JobDefinitions = {
+    gatherer: { name: '采集者', icon: '🧺', description: '采集野果和木材 (+0.5食物,+0.3木材)', production: { food: 0.5, wood: 0.3 } },
+    farmer: { name: '农民', icon: '👨‍🌾', description: '在农田耕作 (+1.2食物)', production: { food: 1.2 } },
+    lumberjack: { name: '伐木工', icon: '🪓', description: '砍伐树木 (+1.0木材)', production: { wood: 1.0 } },
+    miner: { name: '矿工', icon: '⛏️', description: '开采矿石 (+0.5石料,+0.2金属)', production: { stone: 0.5, metal: 0.2 } },
+    scholar: { name: '学者', icon: '📚', description: '研究科技 (+0.3科研点,消耗0.5食物)', production: { research: 0.3 }, consumption: { food: 0.5 } },
+    artisan: { name: '工匠', icon: '🔨', description: '制作工具 (+0.3金属,+0.1黄金)', production: { metal: 0.3, gold: 0.1 }, consumption: { wood: 0.3, stone: 0.2 } },
+    priest: { name: '祭司', icon: '🙏', description: '传播信仰 (+0.2信仰,+0.1文化)', production: { faith: 0.2, culture: 0.1 }, consumption: { food: 0.3 } },
+    merchant: { name: '商人', icon: '💰', description: '贸易获得黄金 (+0.5黄金)', production: { gold: 0.5 }, consumption: { food: 0.2 } }
+};
+
+const BuildingDefinitions = {
+    tent: { name: '帐篷', icon: '⛺', description: '提供2人口上限', cost: { wood: 20 }, effects: { popCap: 2 } },
+    hut: { name: '茅屋', icon: '🛖', description: '提供5人口上限', cost: { wood: 50, stone: 10 }, effects: { popCap: 5 }, requireTech: 'construction' },
+    house: { name: '房屋', icon: '🏠', description: '提供10人口上限', cost: { wood: 100, stone: 50, metal: 10 }, effects: { popCap: 10 }, requireTech: 'masonry' },
+    farm: { name: '农场', icon: '🚜', description: '自动生产食物(+0.5/秒)', cost: { wood: 30, stone: 10 }, production: { food: 0.5 }, requireTech: 'agriculture' },
+    lumberMill: { name: '锯木厂', icon: '🏭', description: '自动生产木材(+0.4/秒)', cost: { wood: 50, stone: 20 }, production: { wood: 0.4 }, requireTech: 'tools' },
+    quarry: { name: '采石场', icon: '🏗️', description: '自动生产石料(+0.3/秒)', cost: { wood: 80, metal: 10 }, production: { stone: 0.3 }, requireTech: 'mining' },
+    mine: { name: '矿井', icon: '⛏️', description: '自动生产金属(+0.2/秒)', cost: { wood: 100, stone: 50 }, production: { metal: 0.2 }, requireTech: 'mining' },
+    barn: { name: '粮仓', icon: '🌾', description: '增加食物储存上限+200', cost: { wood: 40 }, effects: { resourceMax: { food: 200 } } },
+    warehouse: { name: '仓库', icon: '📦', description: '增加资源储存上限+100', cost: { wood: 100, stone: 50 }, effects: { resourceMax: { wood: 100, stone: 100, metal: 100, gold: 100 } }, requireTech: 'construction' },
+    library: { name: '图书馆', icon: '📖', description: '自动生产科研点(+0.2/秒)', cost: { wood: 150, stone: 100 }, production: { research: 0.2 }, requireTech: 'writing' },
+    temple: { name: '神殿', icon: '⛪', description: '自动生产信仰和文化', cost: { stone: 200, gold: 20, metal: 30 }, production: { faith: 0.1, culture: 0.1 }, requireTech: 'religion' },
+    market: { name: '市场', icon: '🏪', description: '自动生产黄金(+0.3/秒)', cost: { wood: 100, stone: 50, gold: 10 }, production: { gold: 0.3 }, requireTech: 'currency' },
+    academy: { name: '学院', icon: '🎓', description: '大幅提升科研(+0.5/秒)', cost: { wood: 300, stone: 200, metal: 50 }, production: { research: 0.5 }, requireTech: 'philosophy' }
+};
+
+const TechDefinitions = {
+    tools: { name: '工具制作', icon: '🔨', description: '木材和石料产量+20%', cost: { research: 20 }, requires: [], startUnlocked: true },
+    fire: { name: '生火', icon: '🔥', description: '幸福度+10%', cost: { research: 30 }, requires: [], startUnlocked: true },
+    agriculture: { name: '农业', icon: '🌾', description: '解锁农场，食物+30%', cost: { research: 50 }, requires: ['tools'] },
+    construction: { name: '建筑学', icon: '🏗️', description: '解锁茅屋和仓库', cost: { research: 80 }, requires: ['tools'] },
+    mining: { name: '采矿', icon: '⛏️', description: '解锁矿工、采石场和矿井', cost: { research: 100 }, requires: ['tools'] },
+    masonry: { name: '石工', icon: '🧱', description: '解锁房屋', cost: { research: 120 }, requires: ['construction', 'mining'] },
+    writing: { name: '文字', icon: '📜', description: '解锁图书馆', cost: { research: 200 }, requires: ['agriculture'] },
+    religion: { name: '宗教', icon: '✝️', description: '解锁神殿和祭司', cost: { research: 150, faith: 50 }, requires: ['construction'] },
+    currency: { name: '货币', icon: '🪙', description: '解锁市场和商人', cost: { research: 180 }, requires: ['mining'] },
+    philosophy: { name: '哲学', icon: '🤔', description: '解锁学院', cost: { research: 500 }, requires: ['writing'] }
+};
+
+const EventManager = {
+    events: [
+        { id: 'harvest', name: '丰收', icon: '🌾', chance: 0.05, condition: g => g.state.buildings.farm >= 2, effect: g => { g.addResource('food', 100); return '获得100食物'; } },
+        { id: 'fire', name: '森林火灾', icon: '🔥', chance: 0.03, condition: g => g.state.resources.wood.amount > 50, effect: g => { const l = Math.floor(g.state.resources.wood.amount * 0.2); g.consumeResource('wood', l); return `损失${l}木材`; } },
+        { id: 'trader', name: '流浪商人', icon: '🧳', chance: 0.04, condition: g => g.state.resources.food.amount > 100, effect: g => { g.consumeResource('food', 50); g.addResource('gold', 10); return '用50食物换10黄金'; } },
+        { id: 'inspiration', name: '灵光一现', icon: '💡', chance: 0.03, condition: g => g.state.population.jobs.scholar >= 1, effect: g => { g.addResource('research', 50); return '获得50科研点'; } },
+        { id: 'settlers', name: '新移民', icon: '👥', chance: 0.02, condition: g => g.state.population.total < g.state.population.cap - 2, effect: g => { const n = Math.floor(Math.random() * 3) + 1; g.addPopulation(n); return `${n}名新移民加入`; } }
+    ],
+    checkEvents(g) { this.events.forEach(e => { if (Math.random() < e.chance && e.condition(g)) { const r = e.effect(g); this.logEvent(g, `[事件] ${e.icon} ${e.name}: ${r}`); } }); },
+    logEvent(g, m) { g.state.eventHistory.unshift({ time: Date.now(), year: Math.floor(g.state.year), message: m }); if (g.state.eventHistory.length > 50) g.state.eventHistory.pop(); document.getElementById('event-log').innerHTML = g.state.eventHistory.map(e => `<div class="log-entry">[第${e.year}年] ${e.message}</div>`).join(''); }
+};
+
+const SaveManager = {
+    SAVE_KEY: 'civ_idle_save',
+    save(g) { localStorage.setItem(this.SAVE_KEY, JSON.stringify({ t: Date.now(), s: g.state })); },
+    load(g) { try { const d = localStorage.getItem(this.SAVE_KEY); if (d) { const p = JSON.parse(d); if (p.s) g.state = { ...g.state, ...p.s }; } } catch (e) {} },
+    exportSave(g) { navigator.clipboard.writeText(btoa(JSON.stringify({ t: Date.now(), s: g.state }))).then(() => alert('存档已复制到剪贴板！')); },
+    importSave(g) { const s = prompt('请输入存档代码：'); if (s) { try { g.state = JSON.parse(atob(s)).s; g.render(); alert('存档加载成功！'); } catch { alert('存档代码无效'); } } }
+};
+
+class Game {
+    constructor() {
+        this.state = { year: 1, lastTick: Date.now(), resources: {}, buildings: {}, tech: {}, exploredTiles: [], eventHistory: [], population: { total: 0, idle: 0, cap: 10, happiness: 100, jobs: {} } };
+        this.init();
+    }
+    init() {
+        for (let k in ResourceDefinitions) this.state.resources[k] = { amount: ResourceDefinitions[k].initial, max: ResourceDefinitions[k].max, rate: 0 };
+        for (let k in BuildingDefinitions) this.state.buildings[k] = 0;
+        for (let k in TechDefinitions) this.state.tech[k] = { unlocked: TechDefinitions[k].startUnlocked, researched: false };
+        for (let k in JobDefinitions) this.state.population.jobs[k] = 0;
+        SaveManager.load(this);
+        this.processOffline();
+        setInterval(() => this.tick(), 1000);
+        setInterval(() => this.render(), 100);
+        this.render();
+    }
+    processOffline() {
+        const offlineTime = (Date.now() - (localStorage.getItem('civ_idle_save') ? JSON.parse(localStorage.getItem('civ_idle_save')).t || Date.now() : Date.now())) / 1000;
+        if (offlineTime > 60) {
+            this.calculateRates();
+            let gains = [];
+            for (let k in this.state.resources) { const r = this.state.resources[k].rate; if (r > 0) { const g = r * Math.min(offlineTime, 86400) * 0.5; this.addResource(k, g); if (g > 1) gains.push(`${Math.floor(g)} ${ResourceDefinitions[k].name}`); } }
+            if (gains.length > 0) { document.getElementById('offline-message').textContent = `离线${Math.floor(offlineTime / 3600)}小时，获得：${gains.join('、')}`; document.getElementById('offline-popup').classList.remove('hidden'); }
+        }
+    }
+    tick() { this.state.year += 0.01; this.calculateRates(); for (let k in this.state.resources) this.addResource(k, this.state.resources[k].rate); EventManager.checkEvents(this); this.save(); }
+    calculateRates() { for (let k in this.state.resources) this.state.resources[k].rate = 0; for (let k in this.state.buildings) { const b = BuildingDefinitions[k], c = this.state.buildings[k]; if (c > 0 && b.production) for (let r in b.production) this.state.resources[r].rate += b.production[r] * c; } for (let k in this.state.population.jobs) { const j = JobDefinitions[k], c = this.state.population.jobs[k]; if (c > 0) { if (j.production) for (let r in j.production) this.state.resources[r].rate += j.production[r] * c; if (j.consumption) for (let r in j.consumption) this.state.resources[r].rate -= j.consumption[r] * c; } } }
+    addResource(k, a) { const r = this.state.resources[k]; if (r) r.amount = Math.max(0, Math.min(r.amount + a, r.max)); }
+    consumeResource(k, a) { this.addResource(k, -a); }
+    canAfford(c) { for (let k in c) if (this.state.resources[k]?.amount < c[k]) return false; return true; }
+    payCosts(c) { for (let k in c) this.consumeResource(k, c[k]); }
+    addPopulation(n) { this.state.population.total += n; this.state.population.idle += n; }
+    assignJob(k) { if (this.state.population.idle > 0) { this.state.population.jobs[k]++; this.state.population.idle--; this.render(); } }
+    unassignJob(k) { if (this.state.population.jobs[k] > 0) { this.state.population.jobs[k]--; this.state.population.idle++; this.render(); } }
+    recruit() { const c = 10 + Math.floor(this.state.population.total * 0.5); if (this.canAfford({ food: c }) && this.state.population.total < this.state.population.cap) { this.payCosts({ food: c }); this.addPopulation(1); this.render(); } }
+    build(k) { const b = BuildingDefinitions[k], c = {}; for (let r in b.cost) c[r] = Math.floor(b.cost[r] * Math.pow(1.1, this.state.buildings[k])); if (this.canAfford(c)) { this.payCosts(c); this.state.buildings[k]++; if (b.effects) { if (b.effects.popCap) this.state.population.cap += b.effects.popCap; if (b.effects.resourceMax) for (let r in b.effects.resourceMax) this.state.resources[r].max += b.effects.resourceMax[r]; } this.render(); } }
+    research(k) { const t = TechDefinitions[k], s = this.state.tech[k]; if (s.researched || !s.unlocked) return; for (let r of t.requires) if (!this.state.tech[r]?.researched) return; if (this.canAfford(t.cost)) { this.payCosts(t.cost); s.researched = true; for (let x in TechDefinitions) if (TechDefinitions[x].requires?.includes(k)) this.state.tech[x].unlocked = true; this.render(); } }
+    render() {
+        document.getElementById('year').textContent = Math.floor(this.state.year);
+        document.getElementById('total-pop').textContent = this.state.population.total;
+        document.getElementById('idle-pop').textContent = this.state.population.idle;
+        document.getElementById('pop-cap').textContent = this.state.population.cap;
+        document.getElementById('happiness').textContent = this.state.population.happiness + '%';
+        document.getElementById('recruit-cost').textContent = 10 + Math.floor(this.state.population.total * 0.5);
+        
+        // Resources
+        const rg = document.getElementById('resources-grid');
+        rg.innerHTML = Object.keys(ResourceDefinitions).map(k => `<div class="resource-card"><div class="resource-icon">${ResourceDefinitions[k].icon}</div><div class="resource-name">${ResourceDefinitions[k].name}</div><div class="resource-amount">${Math.floor(this.state.resources[k].amount)}</div><div class="resource-max">/${this.state.resources[k].max === Infinity ? '∞' : Math.floor(this.state.resources[k].max)}</div></div>`).join('');
+        
+        // Rates
+        const pr = document.getElementById('production-rates');
+        pr.innerHTML = Object.keys(ResourceDefinitions).map(k => { const r = this.state.resources[k].rate; return r !== 0 ? `<span class="rate ${r > 0 ? 'positive' : 'negative'}">${ResourceDefinitions[k].icon} ${r > 0 ? '+' : ''}${r.toFixed(1)}/s</span>` : ''; }).join('');
+        
+        // Jobs
+        const jl = document.getElementById('jobs-list');
+        jl.innerHTML = Object.keys(JobDefinitions).map(k => `<div class="job-item"><div class="job-info"><span class="job-icon">${JobDefinitions[k].icon}</span><div><div class="job-name">${JobDefinitions[k].name}</div><div class="job-desc">${JobDefinitions[k].description}</div></div></div><div class="job-controls"><button onclick="game.unassignJob('${k}')" ${this.state.population.jobs[k] === 0 ? 'disabled' : ''}>-</button><span>${this.state.population.jobs[k]}</span><button onclick="game.assignJob('${k}')" ${this.state.population.idle === 0 ? 'disabled' : ''}>+</button></div></div>`).join('');
+        
+        // Buildings
+        const bl = document.getElementById('buildings-list');
+        bl.innerHTML = Object.keys(BuildingDefinitions).map(k => {
+            const b = BuildingDefinitions[k];
+            if (b.requireTech && !this.state.tech[b.requireTech]?.researched) return '';
+            const c = {}; for (let r in b.cost) c[r] = Math.floor(b.cost[r] * Math.pow(1.1, this.state.buildings[k]));
+            const a = this.canAfford(c);
+            return `<div class="building-item ${a ? '' : 'disabled'}"><div class="building-info"><span class="building-icon">${b.icon}</span><div><div class="building-name">${b.name} (${this.state.buildings[k]})</div><div class="building-desc">${b.description}</div><div class="building-cost">${Object.entries(c).map(([r, n]) => `<span class="${this.state.resources[r]?.amount >= n ? 'can-afford' : 'cannot-afford'}">${Math.floor(n)} ${ResourceDefinitions[r]?.icon}</span>`).join(' ')}</div></div></div><button onclick="game.build('${k}')" ${a ? '' : 'disabled'}>建造</button></div>`;
+        }).join('');
+        
+        // Tech
+        const tt = document.getElementById('tech-tree');
+        tt.innerHTML = Object.keys(TechDefinitions).map(k => {
+            const t = TechDefinitions[k], s = this.state.tech[k];
+            if (!s.unlocked && !t.startUnlocked) return '';
+            const a = this.canAfford(t.cost);
+            return `<div class="tech-item ${s.researched ? 'researched' : ''} ${a ? '' : 'disabled'}"><div class="tech-info"><span class="tech-icon">${t.icon}</span><div><div class="tech-name">${t.name} ${s.researched ? '✓' : ''}</div><div class="tech-desc">${t.description}</div><div class="tech-cost">${Object.entries(t.cost).map(([r, n]) => `<span class="${this.state.resources[r]?.amount >= n ? 'can-afford' : 'cannot-afford'}">${Math.floor(n)} ${ResourceDefinitions[r]?.icon || r}</span>`).join(' ')}</div></div></div><button onclick="game.research('${k}')" ${s.researched || !a ? 'disabled' : ''}>${s.researched ? '已完成' : '研究'}</button></div>`;
+        }).join('');
+    }
+    save() { SaveManager.save(this); }
+    exportSave() { SaveManager.exportSave(this); }
+    importSave() { SaveManager.importSave(this); }
+    hardReset() { if (confirm('确定重置所有进度？')) { localStorage.removeItem('civ_idle_save'); location.reload(); } }
+}
+
+let game;
+document.addEventListener('DOMContentLoaded', () => {
+    game = new Game();
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+        });
+    });
+    document.getElementById('recruit-btn').addEventListener('click', () => game.recruit());
+});
+function dismissOffline() { document.getElementById('offline-popup').classList.add('hidden'); }
+    </script>
+</body>
+</html>
