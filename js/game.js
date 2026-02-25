@@ -311,12 +311,21 @@ class CivilizationGame {
     }
 
     recruit() {
+        console.log('招募按钮被点击');
         const cost = 10 + Math.floor(this.state.population.total * 0.5);
+        console.log('招募成本:', cost, '食物');
+        console.log('当前食物:', this.state.resources.food.amount);
+        console.log('人口:', this.state.population.total, '/', this.state.population.cap);
+        
         if (this.canAfford({ food: cost }) && this.state.population.total < this.state.population.cap) {
             this.payCosts({ food: cost });
             this.addPopulation(1);
             EventManager.logEvent(this, '招募了1名新村民');
             this.render();
+            console.log('招募成功');
+        } else {
+            console.log('招募失败：食物不足或人口已达上限');
+            alert('食物不足或人口已达上限！');
         }
     }
 
