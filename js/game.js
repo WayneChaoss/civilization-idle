@@ -79,6 +79,12 @@ class CivilizationGame {
         // 渲染初始界面
         this.render();
 
+        // 启动新手教程
+        setTimeout(() => TutorialSystem.start(), 500);
+
+        // 定期显示快捷提示
+        setInterval(() => QuickTips.show(), 60000);
+
         console.log('文明放置已初始化');
     }
 
@@ -423,6 +429,9 @@ class CivilizationGame {
         // 更新年份
         document.getElementById('year').textContent = Math.floor(this.state.year);
 
+        // 更新目标提示
+        this.updateObjective();
+
         // 渲染资源
         this.renderResources();
 
@@ -610,6 +619,34 @@ class CivilizationGame {
                 return `<span class="${has ? 'can-afford' : 'cannot-afford'}">${Math.floor(amount)} ${this.resourceDefs[res]?.icon || res}</span>`;
             })
             .join(' ');
+    }
+
+    updateObjective() {
+        const objectiveEl = document.getElementById('objective-text');
+        if (!objectiveEl) return;
+
+        let objective = '';
+        
+        // 根据游戏进度显示不同目标
+        if (this.state.population.total === 0) {
+            objective = '招募你的第一个村民（点击"人口"标签，然后点击"招募村民"）';
+        } else if (this.state.population.idle > 0) {
+            objective = `你有 ${this.state.population.idle} 个空闲村民！点击"人口"标签分配他们工作（推荐采集者）`;
+        } else if (this.state.buildings.tent === 0 && this.state.resources.wood.amount >= 20) {
+            objective = '资源充足！点击"建筑"标签建造帐篷，增加人口上限';
+        } else if (!this.state.tech.tools.researched && this.state.resources.research.amount >= 20) {
+            objective = '科研点足够！点击"科技"标签研究"工具制作"';
+        } else if (this.state.population.jobs.scholar === 0 && this.state.tech.tools.researched) {
+            objective = '工具研究完成！招募更多村民并分配学者，加速科研';
+        } else if (this.state.buildings.farm === 0 && this.state.tech.agriculture?.researched) {
+            objective = '农业已解锁！建造农场自动生产食物';
+        } else if (this.state.exploredTiles.length === 0 && this.state.resources.food.amount >= 50) {
+            objective = '食物充足！点击"世界"标签探索周边，发现资源';
+        } else {
+            objective = '继续发展：招募人口、建造建筑、研究科技、探索世界';
+        }
+
+        objectiveEl.textContent = objective;
     }
 
     updateUI() {

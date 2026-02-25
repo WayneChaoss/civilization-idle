@@ -29,6 +29,15 @@
 
         <!-- 资源面板 -->
         <section id="resources-panel" class="panel active">
+            <!-- 当前目标提示 -->
+            <div id="current-objective" class="game-objective">
+                <span class="game-objective-icon">🎯</span>
+                <div class="game-objective-text">
+                    <div class="game-objective-title">当前目标</div>
+                    <div class="game-objective-desc" id="objective-text">招募你的第一个村民并开始采集资源</div>
+                </div>
+            </div>
+
             <h2>资源储量</h2>
             <div id="resources-grid" class="grid"></div>
             <h3>生产效率</h3>
@@ -99,6 +108,7 @@
     <script src="js/tech.js"></script>
     <script src="js/events.js"></script>
     <script src="js/save.js"></script>
+    <script src="js/tutorial.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>
